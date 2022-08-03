@@ -16,6 +16,18 @@
         </my-dialog>
         <post-list :posts="sortedAndSearchPosts" @remove="removePost" v-if="!isPostsLoading" />
         <div v-else>Идет загрузка...</div>
+        <div class="page-wrapper">
+            <div
+            v-for="pageNum in totalPages"
+            key="pageNum"
+            class="page"
+            :class="{
+                'current-page':page === pageNum
+            }"
+            @click="changePage(pageNum)"
+            >{{pageNum}}
+            </div>
+        </div>
     </div>
 </template>
 
@@ -26,6 +38,7 @@ import myDialog from './components/UI/myDialog.vue';
 import MyButton from './components/UI/myButton.vue';
 import mySelect from '@/components/UI/mySelect.vue';
 import MyInput from './components/UI/myInput.vue'; 
+import axios from 'axios';
 export default {
     components: {
     postForm,
@@ -45,6 +58,7 @@ export default {
             searchQuery: '',
             page: 1,
             limit: 10,
+            totalPages: 0,
             sortOptions: [
                 {value: 'title', name:'По названию'},
                 {value: 'body', name:'По содержимому'},
@@ -62,18 +76,24 @@ export default {
         showDialog() {
             this.dialogVisible = true;
         },
+        changePage(pageNum) {
+            this.page = pageNum;
+            this.fetchPosts();
+
+        },
         async fetchPosts() {
-            this.isPostsLoading = true;
-            const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
-            if (!response.ok) {
-                const errorMessage = 'Ошибка!';
-                throw Error(errorMessage);
-                this.isPostsLoading = false;
+            try {
+                const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
+                    params: {
+                        _page:this.page,
+                        _limit:this.limit
+                    }
+                });
+                this.totalPages = Math.ceil(response.headers['x-total-count']/this.limit);
+                this.posts = response.data;
+            } catch (e) {
+                alert('Ошибка');
             }
-            const json = await response.json();
-            console.log(json);
-            this.posts = json;
-            this.isPostsLoading = false;
         }
     },
     mounted() {
@@ -107,5 +127,19 @@ export default {
         margin: 15px 0px 0px 0px;
         display: flex;
         justify-content: space-between;
+    }
+
+    .page-wrapper {
+        display: flex;
+        margin-top: 15px;
+    }
+
+    .page {
+        border: 1px solid blue;
+        padding: 10px;
+    }
+
+    .current-page {
+        border: 2px solid blue;
     }
 </style>
