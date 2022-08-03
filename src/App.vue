@@ -1,6 +1,8 @@
 <template>
     <div class="app">
         <h1>Страница с постами</h1>
+        <my-input v-model="searchQuery" placeholder="Поиск...">
+        </my-input>
         <div class="app-btns">
             <my-button @click="showDialog">
                 Создать пост
@@ -12,7 +14,7 @@
         <my-dialog v-model:show="dialogVisible">
             <post-form @create="createPost" />
         </my-dialog>
-        <post-list :posts="sortedPosts" @remove="removePost" v-if="!isPostsLoading" />
+        <post-list :posts="sortedAndSearchPosts" @remove="removePost" v-if="!isPostsLoading" />
         <div v-else>Идет загрузка...</div>
     </div>
 </template>
@@ -22,15 +24,17 @@ import postForm from '@/components/postForm.vue';
 import postList from '@/components/postList.vue';
 import myDialog from './components/UI/myDialog.vue';
 import MyButton from './components/UI/myButton.vue';
-import mySelect from '@/components/UI/mySelect.vue'; 
+import mySelect from '@/components/UI/mySelect.vue';
+import MyInput from './components/UI/myInput.vue'; 
 export default {
     components: {
-        postForm,
-        postList,
-        myDialog,
-        MyButton,
-        mySelect
-    },
+    postForm,
+    postList,
+    myDialog,
+    MyButton,
+    mySelect,
+    MyInput
+},
     data() {
         return {
             posts: [],
@@ -38,6 +42,9 @@ export default {
             modificatorValue: '',
             isPostsLoading: false,
             selectedSort: '',
+            searchQuery: '',
+            page: 1,
+            limit: 10,
             sortOptions: [
                 {value: 'title', name:'По названию'},
                 {value: 'body', name:'По содержимому'},
@@ -77,6 +84,9 @@ export default {
             return [...this.posts].sort((post1, post2) => {
                 return post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]);
             })
+        },
+        sortedAndSearchPosts() {
+            return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
         }
     },
 }
