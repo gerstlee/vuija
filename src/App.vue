@@ -1,30 +1,101 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>
+    <div class="app">
+        <h1>Страница с постами</h1>
+        <div class="app-btns">
+            <my-button @click="showDialog">
+                Создать пост
+            </my-button>
+            <my-select v-model="selectedSort" :options="sortOptions">
+                
+            </my-select>
+        </div>
+        <my-dialog v-model:show="dialogVisible">
+            <post-form @create="createPost" />
+        </my-dialog>
+        <post-list :posts="sortedPosts" @remove="removePost" v-if="!isPostsLoading" />
+        <div v-else>Идет загрузка...</div>
+    </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+<script>
+import postForm from '@/components/postForm.vue';
+import postList from '@/components/postList.vue';
+import myDialog from './components/UI/myDialog.vue';
+import MyButton from './components/UI/myButton.vue';
+import mySelect from '@/components/UI/mySelect.vue'; 
+export default {
+    components: {
+        postForm,
+        postList,
+        myDialog,
+        MyButton,
+        mySelect
+    },
+    data() {
+        return {
+            posts: [],
+            dialogVisible: false,
+            modificatorValue: '',
+            isPostsLoading: false,
+            selectedSort: '',
+            sortOptions: [
+                {value: 'title', name:'По названию'},
+                {value: 'body', name:'По содержимому'},
+            ]
+        }
+    },
+    methods: {
+        createPost(post) {
+            this.posts.push(post);
+            this.dialogVisible = false;
+        },
+        removePost(post) {
+            this.posts = this.posts.filter(p => p.id !== post.id)
+        },
+        showDialog() {
+            this.dialogVisible = true;
+        },
+        async fetchPosts() {
+            this.isPostsLoading = true;
+            const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
+            if (!response.ok) {
+                const errorMessage = 'Ошибка!';
+                throw Error(errorMessage);
+                this.isPostsLoading = false;
+            }
+            const json = await response.json();
+            console.log(json);
+            this.posts = json;
+            this.isPostsLoading = false;
+        }
+    },
+    mounted() {
+        this.fetchPosts();
+    },
+    computed: {
+        sortedPosts(){
+            return [...this.posts].sort((post1, post2) => {
+                return post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]);
+            })
+        }
+    },
 }
+</script>
 
-nav {
-  padding: 30px;
-}
+<style scoped>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
+    .app {
+        padding: 20px;
+    }
 
-nav a.router-link-exact-active {
-  color: #42b983;
-}
+    .app-btns {
+        margin: 15px 0px 0px 0px;
+        display: flex;
+        justify-content: space-between;
+    }
 </style>
