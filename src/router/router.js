@@ -29,9 +29,9 @@ const routes = [
         component:postsPageStored
     },
     {
-        path: '/composition',
+        path:'/comp',
         component:postsPageAPI
-    }
+    },
 ]
 
 const router = createRouter({
